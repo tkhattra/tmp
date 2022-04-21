@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+# usage: psigmask sigmask
+
+# % grep ^Sig /proc/$$/status
+# SigQ:   1/256810
+# SigPnd: 0000000000000000
+# SigBlk: 0000000000010000
+# SigIgn: 0000000000384004
+# SigCgt: 000000004b813efb
+#
+# % psigmask 000000004b813efb
+# SIGHUP,SIGINT,SIGILL,SIGTRAP,SIGIOT,SIGBUS,SIGFPE,SIGUSR1,SIGSEGV,SIGUSR2,SIGPIPE,SIGALRM,SIGCLD,SIGXCPU,SIGXFSZ,SIGVTALRM,SIGWINCH,SIGSYS
+
+import sys
+import signal
+
+assert len(sys.argv) == 2
+sigmask = int(sys.argv[1], 16)
+sigs = dict((int(signal.__dict__[k]), k) for k in dir(signal) if k.startswith('SIG') and not '_' in k)
+
+print(','.join(sigs[s+1] for s in range(31) if sigmask & 2**s))

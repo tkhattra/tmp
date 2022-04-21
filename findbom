@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# find files that start with a BOM 
+
+DIR="${1:-.}"
+
+printf '\xEF\xBB\xBF' >/tmp/bom.dat
+find "$DIR" -type f -exec cmp -sn 3 {} /tmp/bom.dat \; -print
