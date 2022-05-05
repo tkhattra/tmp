@@ -13,5 +13,5 @@ def enc(v):
 def dec(b):
     v = 0
     for i in range(len(b)):
-        v |= b[i] << 7*i
+        v |= (b[i] & 127) << 7*i
     return v
