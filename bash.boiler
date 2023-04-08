@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -eu -o pipefail
+
+PROGNAME="$(readlink -f "${BASH_SOURCE[0]}")"
+PROGNAME="${PROGNAME##*/}"
+
+exec > >(gawk '{print strftime("%F %T%z: '"$PROGNAME"':"), $0}') 2>&1
+
+STATUS=0
+
+log()   { echo "$*"; }
+error() { echo "error: $*" >&2; STATUS=1; }
+fatal() { echo "fatal: $*" >&2; STATUS=1; exit 1; }
+
+# remove temporary files on exit
+trap 'rm -f ...; exit $STATUS' 0 1 2 15
