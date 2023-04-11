@@ -5,21 +5,23 @@
 extern "C" {
 #endif
 
-#include "ip4.h"
+#include "ip46.h"
 
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX 108
 #endif
 
-extern int      xsocket_udp(void);
-extern int      xsocket_tcp(void);
+extern int      xsocket_udp4(void);
+extern int      xsocket_tcp4(void);
+extern int      xsocket_udp6(void);
+extern int      xsocket_tcp6(void);
 extern int      xsocket_unixdgram(void);
 
-extern int      xsocket_bind4(int sockfd, IP4 ip4);
-extern int      xsocket_accept4(int sockfd, IP4 *ip4);
-extern int      xsocket_connect4(int sockfd, IP4 ip4);
-extern ssize_t  xsocket_recv4(int sockfd, void *buf, size_t len, IP4 *ip4);
-extern ssize_t  xsocket_send4(int sockfd, const void *buf, size_t len, IP4 ip4);
+extern int      xsocket_bind(int sockfd, const IP46 *ip46);
+extern int      xsocket_accept(int sockfd, IP46 *ip46);
+extern int      xsocket_connect(int sockfd, const IP46 *ip46);
+extern ssize_t  xsocket_recv(int sockfd, void *buf, size_t len, IP46 *ip46);
+extern ssize_t  xsocket_send(int sockfd, const void *buf, size_t len, const IP46 *ip46);
 
 int             xsocket_bindunix(int sockfd, const char *path);
 ssize_t         xsocket_recvunix(int sockfd, void *buf, size_t len, char *path, size_t pathlen);
@@ -39,9 +41,6 @@ extern int      xsocket_get_sndbuf(int sockfd);
 extern int      xsocket_tmperror(int errnum);
 extern int      xsocket_tcpeof(ssize_t nread, int errnum);
 extern int      xsocket_noconn(int errnum);
-
-extern int      xinet4_pton(const void *src, char *dst);
-extern int      xinet6_pton(const void *src, char *dst);
 
 #if defined(__cplusplus)
 }

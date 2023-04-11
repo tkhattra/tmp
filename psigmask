@@ -18,5 +18,6 @@ import signal
 assert len(sys.argv) == 2
 sigmask = int(sys.argv[1], 16)
 sigs = dict((int(signal.__dict__[k]), k) for k in dir(signal) if k.startswith('SIG') and not '_' in k)
+sigs.update([(i,str(i)) for i in range(1,max(sigs.keys())) if not i in sigs.keys()])
 
 print(','.join(sigs[s+1] for s in range(31) if sigmask & 2**s))

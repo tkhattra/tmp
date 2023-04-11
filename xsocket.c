@@ -2,7 +2,6 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <sys/un.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -13,8 +12,10 @@
 #define SOL_TCP 6
 #endif
 
-int xsocket_udp(void)       { return socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); }
-int xsocket_tcp(void)       { return socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); }
+int xsocket_udp4(void)      { return socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); }
+int xsocket_tcp4(void)      { return socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); }
+int xsocket_udp6(void)      { return socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP); }
+int xsocket_tcp6(void)      { return socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP); }
 int xsocket_unixdgram(void) { return socket(AF_UNIX, SOCK_DGRAM, 0); }
 
 int xsocket_listen(int sockfd, int backlog) { return listen(sockfd, backlog); }
@@ -51,87 +52,123 @@ xsocket_tcpnodelay(int sockfd)
 }
 
 int
-xsocket_bind4(int sockfd, IP4 ip4)
+xsocket_bind(int sockfd, const IP46 *ip46)
 {
-    struct sockaddr_in sa;
+    struct sockaddr_storage sa;
+    socklen_t sa_len;
 
-    memset(&sa, 0, sizeof(sa));
-    sa.sin_family = AF_INET;
-    sa.sin_port = htons(ip4.port);
-    memcpy(&sa.sin_addr, ip4.ip, 4);
+    if (ip46->flag & IP46_IS6) {
+        struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&sa;
+        memset(sa6, 0, sizeof(*sa6));
+        sa6->sin6_family = AF_INET6;
+        sa6->sin6_port = htons(ip46->port);
+        memcpy(&sa6->sin6_addr, ip46->ip, 16);
+        sa_len = sizeof(*sa6);
+    } else {
+        struct sockaddr_in *sa4 = (struct sockaddr_in *)&sa;
+        memset(sa4, 0, sizeof(*sa4));
+        sa4->sin_family = AF_INET;
+        sa4->sin_port = htons(ip46->port);
+        memcpy(&sa4->sin_addr, ip46->ip, 4);
+        sa_len = sizeof(*sa4);
+    }
 
-    return bind(sockfd, (struct sockaddr *)&sa, sizeof(sa));
+    return bind(sockfd, (struct sockaddr *)&sa, sa_len);
 }
 
-extern int
-xsocket_connect4(int sockfd, IP4 ip4)
+int
+xsocket_connect(int sockfd, const IP46 *ip46)
 {
-    struct sockaddr_in sa;
+    struct sockaddr_storage sa;
+    socklen_t sa_len;
     int ret;
 
-    memset(&sa, 0, sizeof(sa));
-    sa.sin_family = AF_INET;
-    sa.sin_port = htons(ip4.port);
-    memcpy(&sa.sin_addr, ip4.ip, 4);
+    if (ip46->flag & IP46_IS6) {
+        struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&sa;
+        memset(sa6, 0, sizeof(*sa6));
+        sa6->sin6_family = AF_INET6;
+        sa6->sin6_port = htons(ip46->port);
+        memcpy(&sa6->sin6_addr, ip46->ip, 16);
+        sa_len = sizeof(*sa6);
+    } else {
+        struct sockaddr_in *sa4 = (struct sockaddr_in *)&sa;
+        memset(sa4, 0, sizeof(*sa4));
+        sa4->sin_family = AF_INET;
+        sa4->sin_port = htons(ip46->port);
+        memcpy(&sa4->sin_addr, ip46->ip, 4);
+        sa_len = sizeof(*sa4);
+    }
 
     do
-        ret = connect(sockfd, (struct sockaddr *)&sa, sizeof(sa));
+        ret = connect(sockfd, (struct sockaddr *)&sa, sa_len);
     while ((ret < 0) && (errno == EINTR));
 
     return ret;
 }
 
 int
-xsocket_accept4(int sockfd, IP4 *ip4)
+xsocket_accept(int sockfd, IP46 *ip46)
 {
-    struct sockaddr_in sa;
+    struct sockaddr_storage sa;
+    socklen_t sa_len = sizeof(sa);
     int ret;
-    socklen_t dummy = sizeof(sa);
 
     do
-        ret = accept(sockfd, (struct sockaddr *)&sa, &dummy);
+        ret = accept(sockfd, (struct sockaddr *)&sa, &sa_len);
     while ((ret < 0) && (errno == EINTR));
 
     if (ret >= 0) {
-        memcpy(ip4->ip, &sa.sin_addr, 4);
-        ip4->port = ntohs(sa.sin_port);
+        if (ip46_from_sockaddr(ip46, (struct sockaddr *)&sa, sa_len) < 0)
+            return -1;
     }
 
     return ret;
 }
 
 ssize_t
-xsocket_recv4(int sockfd, void *buf, size_t len, IP4 *ip4)
+xsocket_recv(int sockfd, void *buf, size_t len, IP46 *ip46)
 {
-    struct sockaddr_in sa;
-    socklen_t addrlen = sizeof(sa);
+    struct sockaddr_storage sa;
+    socklen_t sa_len = sizeof(sa);
     ssize_t ret;
 
     do
-        ret = recvfrom(sockfd, buf, len, 0, (struct sockaddr *)&sa, &addrlen);
+        ret = recvfrom(sockfd, buf, len, 0, (struct sockaddr *)&sa, &sa_len);
     while ((ret < 0) && (errno == EINTR));
 
     if (ret >= 0) {
-        memcpy(ip4->ip, &sa.sin_addr, 4);
-        ip4->port = ntohs(sa.sin_port);
+        if (ip46_from_sockaddr(ip46, (struct sockaddr *)&sa, sa_len) < 0)
+            return -1;
     }
 
     return ret;
 }
 
 ssize_t
-xsocket_send4(int sockfd, const void *buf, size_t len, IP4 ip4)
+xsocket_send(int sockfd, const void *buf, size_t len, const IP46 *ip46)
 {
-    struct sockaddr_in sa;
+    struct sockaddr_storage sa;
+    socklen_t sa_len;
     ssize_t ret;
 
-    memset(&sa, 0, sizeof(sa));
-    sa.sin_family = AF_INET;
-    sa.sin_port = htons(ip4.port);
-    memcpy(&sa.sin_addr, ip4.ip, 4);
+    if (ip46->flag & IP46_IS6) {
+        struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&sa;
+        memset(sa6, 0, sizeof(*sa6));
+        sa6->sin6_family = AF_INET6;
+        sa6->sin6_port = htons(ip46->port);
+        memcpy(&sa6->sin6_addr, ip46->ip, 16);
+        sa_len = sizeof(*sa6);
+    } else {
+        struct sockaddr_in *sa4 = (struct sockaddr_in *)&sa;
+        memset(sa4, 0, sizeof(*sa4));
+        sa4->sin_family = AF_INET;
+        sa4->sin_port = htons(ip46->port);
+        memcpy(&sa4->sin_addr, ip46->ip, 4);
+        sa_len = sizeof(*sa4);
+    }
 
     do
-        ret = sendto(sockfd, buf, len, 0, (struct sockaddr *)&sa, sizeof(sa));
+        ret = sendto(sockfd, buf, len, 0, (struct sockaddr *)&sa, sa_len);
     while ((ret < 0) && (errno == EINTR));
 
     return ret;
@@ -264,12 +301,3 @@ xsocket_noconn(int errnum)
         return 0;
     }
 }
-
-int
-xinet_pton(int af, const void *src, char *dst)
-{
-    return inet_pton(af, src, dst);
-}
-
-int  xinet4_pton(const void *src, char *dst) { return xinet_pton(AF_INET, src, dst); }
-int  xinet6_pton(const void *src, char *dst) { return xinet_pton(AF_INET6, src, dst); }

@@ -9,6 +9,7 @@
 #include "xfile.h"
 
 // instead of #define _GNU_SOURCE/_BSD_SOURCE/_SVID_SOURCE and #include <stdio.h>
+#undef fwrite_unlocked
 extern size_t fwrite_unlocked(const void *ptr, size_t size, size_t n, FILE *stream);
 
 int
