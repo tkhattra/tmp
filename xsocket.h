@@ -32,6 +32,8 @@ extern int      xsocket_reuseaddr(int sockfd);
 extern int      xsocket_tcpnodelay(int sockfd);
 extern int      xsocket_keepalive(int sockfd);
 extern int      xsocket_keepidle(int sockfd, int keepidle);
+extern int      xsocket_set_rcvtimeo(int sockfd, int usec);
+extern int      xsocket_set_sndtimeo(int sockfd, int usec);
 
 extern void     xsocket_set_rcvbuf(int sockfd, int size);
 extern void     xsocket_set_sndbuf(int sockfd, int size);

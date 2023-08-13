@@ -34,6 +34,26 @@ ip46_from_sockaddr(IP46 *ip46, const struct sockaddr *sa, socklen_t sa_len)
     }
 }
 
+void
+ip46_to_sockaddr(const IP46 *ip46, struct sockaddr *sa, socklen_t *sa_len)
+{
+    memset(sa, 0, *sa_len);
+
+    if (ip46->flag & IP46_IS6) {
+        struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+        sa6->sin6_family = AF_INET6;
+        memcpy(&sa6->sin6_addr, ip46->ip, 16);
+        sa6->sin6_port = htons(ip46->port);
+        *sa_len = sizeof(struct sockaddr_in6);
+    } else {
+        struct sockaddr_in *sa4 = (struct sockaddr_in *)sa;
+        sa4->sin_family = AF_INET;
+        memcpy(&sa4->sin_addr, ip46->ip, 4);
+        sa4->sin_port = htons(ip46->port);
+        *sa_len = sizeof(struct sockaddr_in);
+    }
+}
+
 char *
 ip46_ntop(const IP46 *ip46, char *str, size_t size)
 {
@@ -52,7 +72,7 @@ ip46_v4_mapped_to_v4(IP46 *ip46)
 {
     // assert that ip46 is an IPv4-mapped IPv6 address
     assert(ip46->flag & IP46_IS6);
-    assert(IN6_IS_ADDR_V4MAPPED(ip46->ip));
+    assert(ip46_is_v4_mapped(ip46));
 
     ip46->ip[0] = ip46->ip[3];
     ip46->ip[1] = ip46->ip[2] = ip46->ip[3] = 0;
@@ -74,4 +94,16 @@ ip46_pton(IP46 *ip46, const char *str)
     }
 
     return 0;
+}
+
+int
+ip46_is_v4_mapped(const IP46 *ip46)
+{
+    return ip46->ip[0] == 0 && ip46->ip[1] == 0 && ip46->ip[2] == htonl(0xffff);
+}
+
+int
+ip46_is_addr_unspecified(const IP46 *ip46)
+{
+    return ip46->ip[0] == 0 && ip46->ip[1] == 0 && ip46->ip[2] == 0 && ip46->ip[3] == 0;
 }

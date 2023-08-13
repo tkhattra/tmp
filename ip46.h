@@ -24,9 +24,12 @@ enum
 };
 
 extern int  ip46_from_sockaddr(IP46 *ip46, const struct sockaddr *sa, socklen_t sa_len);
+extern void ip46_to_sockaddr(const IP46 *ip46, struct sockaddr *sa, socklen_t *sa_len);
 extern char *ip46_ntop(const IP46 *ip46, char *str, size_t size);
 extern void ip46_v4_mapped_to_v4(IP46 *ip46);
 extern int  ip46_pton(IP46 *ip46, const char *str);
+extern int  ip46_is_v4_mapped(const IP46 *ip46);
+extern int  ip46_is_addr_unspecified(const IP46 *ip46);
 
 #if defined(__cplusplus)
 }

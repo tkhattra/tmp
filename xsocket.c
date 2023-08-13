@@ -2,6 +2,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/un.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -42,6 +43,26 @@ xsocket_keepidle(int sockfd, int keepidle)
     ret = setsockopt(sockfd, SOL_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle));
 #endif
     return ret;
+}
+
+int
+xsocket_set_rcvtimeo(int sockfd, int usec)
+{
+    struct timeval tv;
+
+    tv.tv_sec = usec/1000000;
+    tv.tv_usec = usec%1000000;
+    return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+}
+
+int
+xsocket_set_sndtimeo(int sockfd, int usec)
+{
+    struct timeval tv;
+
+    tv.tv_sec = usec/1000000;
+    tv.tv_usec = usec%1000000;
+    return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 }
 
 int
