@@ -280,6 +280,10 @@ xsocket_tmperror(int errnum)
     case EHOSTDOWN:
     case ENETDOWN:
         return 1;
+    case EDESTADDRREQ:
+    case ENOKEY:
+        // probably via a wireguard interface
+        return 1;
     default:
         return 0;
     }
