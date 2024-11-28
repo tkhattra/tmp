@@ -1,0 +1,5 @@
+#!/bin/bash
+
+uptime=$(cut -d. -f1 /proc/uptime)
+now=$(date +'%s')
+date --date=@$((now-uptime))
