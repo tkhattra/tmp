@@ -1,0 +1,6 @@
+#!/usr/local/src/plan9port/bin/rc
+
+if(~ $#* 0){
+  * = '    '    # 4 spaces
+}
+exec sed 's☺^☺'^$1^'☺'

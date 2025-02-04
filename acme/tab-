@@ -1,0 +1,6 @@
+#!/usr/local/src/plan9port/bin/rc
+
+if(~ $#* 0){
+  * = '	'    # tab
+}
+exec sed 's☺^'^$1^'☺☺'
