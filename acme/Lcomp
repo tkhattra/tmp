@@ -1,2 +1,0 @@
-#!/usr/local/src/plan9port/bin/rc
-exec L comp $*

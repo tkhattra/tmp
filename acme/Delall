@@ -1,0 +1,6 @@
+#!/usr/local/src/plan9port/bin/rc
+
+# del all clean file windows; skip diagnostics windows
+for(winid in `{9p read acme/index | awk '$4==0 && $5==0 && $6 !~ /.*\/[-+][^\/]*/ {print $1}'}) {
+	echo del | 9p write acme/$winid/ctl
+}

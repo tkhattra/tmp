@@ -1,0 +1,4 @@
+#!/usr/local/src/plan9port/bin/rc
+
+echo -n , | 9p write acme/$winid/addr
+echo -n | 9p write acme/$winid/data
