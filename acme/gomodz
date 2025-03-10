@@ -1,0 +1,9 @@
+#!/usr/local/src/plan9port/bin/rc
+
+# verify that all .go files are clean
+if(! 9p read acme/index | awk '$4==0 && $5==1 && $6 ~/\.go$/ {print "error: dirty", $6; status=1} END {exit status}'){
+    exit 1
+}
+modernize -fix -diff ./...
+modernize -fix ./...
+Getall
